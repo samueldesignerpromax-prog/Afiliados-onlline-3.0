@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produtos - Plataforma de Afiliados</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">Affiliate Platform</a>
+            <div class="nav-links">
+                <a href="#" id="dashboardLink">Dashboard</a>
+                <a href="/products.html">Produtos</a>
+                <a href="/reports.html">Relatórios</a>
+                <a href="#" onclick="logout()">Sair</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <h1>Produtos Disponíveis</h1>
+        <div class="card-grid" id="productsContainer"></div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        const user = getUser();
+        if (user) {
+            const dashboardLink = document.getElementById('dashboardLink');
+            if (user.role === 'admin') dashboardLink.href = '/admin-dashboard.html';
+            else if (user.role === 'affiliate') dashboardLink.href = '/affiliate-dashboard.html';
+            else dashboardLink.href = '/seller-dashboard.html';
+        }
+        
+        loadProducts('productsContainer');
+    </script>
+</body>
+</html>
