@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Affiliate Platform - Sistema de Afiliados</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">Affiliate Platform</a>
+            <div class="nav-links">
+                <a href="/products.html">Produtos</a>
+                <a href="/login.html">Login</a>
+                <a href="/register.html">Cadastro</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <div style="text-align: center; padding: 60px 20px;">
+            <h1 style="font-size: 3rem; margin-bottom: 20px;">Plataforma de Afiliados</h1>
+            <p style="font-size: 1.2rem; margin-bottom: 30px;">Venda cursos digitais e ganhe comissões de até 50%!</p>
+            
+            <div class="card-grid" style="margin-top: 40px;">
+                <div class="product-card">
+                    <div class="product-info">
+                        <h3>Para Vendedores</h3>
+                        <p>Ganhe 20% de comissão em cada venda</p>
+                        <p>Meta de 5 vendas para se tornar Afiliado</p>
+                        <a href="/register.html" class="btn">Começar como Vendedor</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-info">
+                        <h3>Para Afiliados</h3>
+                        <p>Ganhe 30% de comissão em cada venda</p>
+                        <p>Recrute vendedores e ganhe mais</p>
+                        <a href="/register.html" class="btn">Começar como Afiliado</a>
+                    </div>
+                </div>
+                
+                <div class="product-card">
+                    <div class="product-info">
+                        <h3>Para Criadores</h3>
+                        <p>Cadastre seu próprio produto digital</p>
+                        <p>Ganhe 50% das vendas do seu produto</p>
+                        <a href="/register.html" class="btn">Cadastrar Produto</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        // Check if user is already logged in
+        if (isAuthenticated()) {
+            redirectToDashboard();
+        }
+    </script>
+</body>
+</html>
