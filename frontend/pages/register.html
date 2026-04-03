@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - Plataforma de Afiliados</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card" style="max-width: 400px; margin: 50px auto;">
+            <h2 style="text-align: center; margin-bottom: 20px;">Cadastro</h2>
+            <form id="registerForm">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="password" required>
+                </div>
+                <div class="form-group">
+                    <label>Tipo de conta</label>
+                    <select id="role">
+                        <option value="seller">Vendedor</option>
+                        <option value="affiliate">Afiliado</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Código de afiliado (opcional)</label>
+                    <input type="text" id="affiliateCode" placeholder="Código do afiliado que te indicou">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Cadastrar</button>
+            </form>
+            <p style="text-align: center; margin-top: 20px;">
+                Já tem conta? <a href="/login.html">Faça login</a>
+            </p>
+        </div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            const affiliateCode = document.getElementById('affiliateCode').value;
+            
+            try {
+                const data = await apiCall('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ name, email, password, role, affiliateCode })
+                });
+                
+                setAuthToken(data.token);
+                setUser(data.user);
+                redirectToDashboard();
+            } catch (error) {
+                alert('Erro ao cadastrar: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
