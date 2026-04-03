@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatórios - Plataforma de Afiliados</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">Affiliate Platform</a>
+            <div class="nav-links">
+                <a href="#" id="dashboardLink">Dashboard</a>
+                <a href="/products.html">Produtos</a>
+                <a href="/reports.html">Relatórios</a>
+                <a href="#" onclick="logout()">Sair</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <h1>Relatórios e Análises</h1>
+        
+        <div class="card">
+            <h2>Vendas por Período</h2>
+            <canvas id="salesChart" style="max-height: 400px;"></canvas>
+        </div>
+        
+        <div class="card">
+            <h2>Produtos Mais Vendidos</h2>
+            <canvas id="productsChart" style="max-height: 400px;"></canvas>
+        </div>
+        
+        <div class="card">
+            <h2>Comissões por Tipo de Usuário</h2>
+            <div id="commissionsInfo"></div>
+        </div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        async function loadReports() {
+            try {
+                const user = getUser();
+                if (user) {
+                    const dashboardLink = document.getElementById('dashboardLink');
+                    if (user.role === 'admin') dashboardLink.href = '/admin-dashboard.html';
+                    else if (user.role === 'affiliate') dashboardLink.href = '/affiliate-dashboard.html';
+                    else dashboardLink.href = '/seller-dashboard.html';
+                }
+                
+                const sales = await apiCall('/sales');
+                
+                // Sales by date
+                const salesByDate = {};
+                sales.forEach(sale => {
+                    const date = new Date(sale.date).toLocaleDateString();
+                    salesByDate[date] = (salesByDate[date] || 0) + sale.amount;
+                });
+                
+                const dates = Object.keys(salesByDate).slice(-7);
+                const amounts = dates.map(d => salesByDate[d]);
+                
+                new Chart(document.getElementById('salesChart'), {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [{
+                            label: 'Vendas (R$)',
+                            data: amounts,
+                            borderColor: '#667eea',
+                            tension: 0.1
+                        }]
+                    }
+                });
+                
+                // Top products
+                const productSales = {};
+                sales.forEach(sale => {
+                    productSales[sale.productName] = (productSales[sale.productName] || 0) + 1;
+                });
+                
+                const topProducts = Object.entries(productSales)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+                
+                new Chart(document.getElementById('productsChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: topProducts.map(p => p[0]),
+                        datasets: [{
+                            label: 'Número de Vendas',
+                            data: topProducts.map(p => p[1]),
+                            backgroundColor: '#764ba2'
+                        }]
+                    }
+                });
+                
+                // Commissions summary
+                const totalOwner = sales.reduce((sum, s) => sum + s.ownerCommission, 0);
+                const totalAffiliate = sales.reduce((sum, s) => sum + s.affiliateCommission, 0);
+                const totalSeller = sales.reduce((sum, s) => sum + s.sellerCommission, 0);
+                
+                document.getElementById('commissionsInfo').innerHTML = `
+                    <div class="dashboard-stats">
+                        <div class="stat-card">
+                            <h3>Dono (Admin)</h3>
+                            <div class="stat-value">R$ ${totalOwner.toFixed(2)}</div>
+                            <p>50% das vendas</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Afiliados</h3>
+                            <div class="stat-value">R$ ${totalAffiliate.toFixed(2)}</div>
+                            <p>30% das vendas</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Vendedores</h3>
+                            <div class="stat-value">R$ ${totalSeller.toFixed(2)}</div>
+                            <p>20% das vendas</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading reports:', error);
+            }
+        }
+        
+        loadReports();
+    </script>
+</body>
+</html>
