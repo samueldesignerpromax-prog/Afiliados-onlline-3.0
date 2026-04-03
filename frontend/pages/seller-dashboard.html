@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendedor Dashboard - Plataforma de Afiliados</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">Affiliate Platform</a>
+            <div class="nav-links">
+                <a href="/seller-dashboard.html">Dashboard</a>
+                <a href="/products.html">Produtos</a>
+                <a href="/reports.html">Relatórios</a>
+                <a href="/register-product.html">Cadastrar Produto</a>
+                <a href="#" onclick="logout()">Sair</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <h1>Dashboard Vendedor</h1>
+        
+        <div class="dashboard-stats" id="stats"></div>
+        
+        <div class="card">
+            <h2>Minhas Vendas</h2>
+            <table class="table">
+                <thead>
+                    <tr><th>Produto</th><th>Valor</th><th>Sua Comissão</th><th>Data</th></tr>
+                </thead>
+                <tbody id="salesList"></tbody>
+            </table>
+        </div>
+        
+        <div class="card" id="goalCard">
+            <h2>Meta para se tornar Afiliado</h2>
+            <div id="goalInfo"></div>
+        </div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        async function loadSellerData() {
+            try {
+                const user = getUser();
+                if (!user || user.role !== 'seller') {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Load sales
+                const sales = await apiCall('/sales');
+                const sellerSales = sales.filter(s => s.sellerId === user.id);
+                const totalCommission = sellerSales.reduce((sum, sale) => sum + sale.sellerCommission, 0);
+                
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat-card">
+                        <h3>Total Vendas</h3>
+                        <div class="stat-value">${sellerSales.length}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Comissão Total</h3>
+                        <div class="stat-value">R$ ${totalCommission.toFixed(2)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Meta (5 vendas)</h3>
+                        <div class="stat-value">${sellerSales.length}/5</div>
+                    </div>
+                `;
+                
+                document.getElementById('salesList').innerHTML = sellerSales.map(sale => `
+                    <tr>
+                        <td>${sale.productName}</td>
+                        <td>R$ ${sale.amount.toFixed(2)}</td>
+                        <td>R$ ${sale.sellerCommission.toFixed(2)}</td>
+                        <td>${new Date(sale.date).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+                
+                // Show goal info
+                const remaining = 5 - sellerSales.length;
+                if (remaining > 0) {
+                    document.getElementById('goalInfo').innerHTML = `
+                        <div class="alert alert-info">
+                            Faltam ${remaining} venda(s) para você se tornar Afiliado e ganhar comissões maiores!
+                            <br>
+                            <strong>Benefícios de ser Afiliado:</strong>
+                            <ul>
+                                <li>Comissão de 30% nas vendas (aumento de 10%)</li>
+                                <li>Pode recrutar outros vendedores</li>
+                                <li>Ganha comissão sobre vendas dos seus indicados</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('goalInfo').innerHTML = `
+                        <div class="alert alert-success">
+                            🎉 Parabéns! Você já pode se tornar Afiliado!
+                            <button onclick="becomeAffiliate()" class="btn btn-success" style="margin-top: 10px;">
+                                Tornar-se Afiliado Agora
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading seller data:', error);
+            }
+        }
+        
+        async function becomeAffiliate() {
+            try {
+                await apiCall('/admin?upgrade=true', {
+                    method: 'PUT',
+                    body: JSON.stringify({ userId: getUser().id, role: 'affiliate' })
+                });
+                
+                const user = getUser();
+                user.role = 'affiliate';
+                setUser(user);
+                
+                alert('Parabéns! Agora você é um Afiliado!');
+                window.location.href = '/affiliate-dashboard.html';
+            } catch (error) {
+                alert('Erro ao tornar-se afiliado: ' + error.message);
+            }
+        }
+        
+        window.becomeAffiliate = becomeAffiliate;
+        loadSellerData();
+    </script>
+</body>
+</html>
