@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Afiliado Dashboard - Plataforma de Afiliados</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">Affiliate Platform</a>
+            <div class="nav-links">
+                <a href="/affiliate-dashboard.html">Dashboard</a>
+                <a href="/products.html">Produtos</a>
+                <a href="/reports.html">Relatórios</a>
+                <a href="#" onclick="logout()">Sair</a>
+            </div>
+        </nav>
+    </header>
+    
+    <div class="container">
+        <h1>Dashboard Afiliado</h1>
+        
+        <div class="dashboard-stats" id="stats"></div>
+        
+        <div class="card">
+            <h2>Seus Links de Afiliado</h2>
+            <button onclick="createAffiliateLink()" class="btn btn-success" style="margin-bottom: 15px;">
+                Gerar Novo Link
+            </button>
+            <div id="linksList"></div>
+        </div>
+        
+        <div class="card">
+            <h2>Vendas Geradas</h2>
+            <table class="table">
+                <thead>
+                    <tr><th>Produto</th><th>Valor</th><th>Sua Comissão</th><th>Data</th></tr>
+                </thead>
+                <tbody id="salesList"></tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h2>Vendedores Indicados</h2>
+            <table class="table">
+                <thead>
+                    <tr><th>Nome</th><th>Email</th><th>Total Vendas</th></tr>
+                </thead>
+                <tbody id="sellersList"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="/js/main.js"></script>
+    <script>
+        async function loadAffiliateData() {
+            try {
+                const user = getUser();
+                if (!user || user.role !== 'affiliate') {
+                    window.location.href = '/login.html';
+                    return;
+                }
+                
+                // Load stats
+                const stats = await apiCall('/affiliate?stats=true');
+                document.getElementById('stats').innerHTML = `
+                    <div class="stat-card">
+                        <h3>Total Vendas</h3>
+                        <div class="stat-value">${stats.totalSales}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Comissão Total</h3>
+                        <div class="stat-value">R$ ${stats.totalCommission.toFixed(2)}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Vendedores Indicados</h3>
+                        <div class="stat-value">${stats.referredCount}</div>
+                    </div>
+                `;
+                
+                // Load affiliate links
+                const links = await apiCall('/affiliate/links');
+                document.getElementById('linksList').innerHTML = links.map(link => `
+                    <div class="alert alert-success" style="margin-bottom: 10px;">
+                        <strong>Seu link:</strong> 
+                        <code>${link.url}</code>
+                        <button onclick="copyToClipboard('${link.url}')" class="btn btn-sm" style="margin-left: 10px;">Copiar</button>
+                    </div>
+                `).join('');
+                
+                // Load sales
+                const sales = await apiCall('/sales');
+                const affiliateSales = sales.filter(s => s.affiliateId === user.id);
+                document.getElementById('salesList').innerHTML = affiliateSales.map(sale => `
+                    <tr>
+                        <td>${sale.productName}</td>
+                        <td>R$ ${sale.amount.toFixed(2)}</td>
+                        <td>R$ ${sale.affiliateCommission.toFixed(2)}</td>
+                        <td>${new Date(sale.date).toLocaleDateString()}</td>
+                    </tr>
+                `).join('');
+                
+                // Load referred sellers
+                const allUsers = await apiCall('/admin?users=true');
+                const referredUsers = allUsers.filter(u => u.referredBy === user.id);
+                document.getElementById('sellersList').innerHTML = referredUsers.map(seller => `
+                    <tr>
+                        <td>${seller.name}</td>
+                        <td>${seller.email}</td>
+                        <td>R$ ${seller.totalSales.toFixed(2)}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading affiliate data:', error);
+            }
+        }
+        
+        async function createAffiliateLink() {
+            try {
+                await apiCall('/affiliate/links', { method: 'POST' });
+                alert('Link gerado com sucesso!');
+                loadAffiliateData();
+            } catch (error) {
+                alert('Erro ao gerar link: ' + error.message);
+            }
+        }
+        
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text);
+            alert('Link copiado para a área de transferência!');
+        }
+        
+        window.createAffiliateLink = createAffiliateLink;
+        window.copyToClipboard = copyToClipboard;
+        loadAffiliateData();
+    </script>
+</body>
+</html>
